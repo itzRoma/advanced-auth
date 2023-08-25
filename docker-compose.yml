@@ -1,0 +1,13 @@
+version: "3.9"
+
+services:
+  maildev:
+    container_name: maildev
+    image: maildev/maildev
+    restart: always
+    environment:
+      - MAILDEV_WEB_PORT=1080
+      - MAILDEV_SMTP_PORT=1025
+    ports:
+      - "4080:1080"
+      - "4025:1025"

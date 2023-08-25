@@ -26,4 +26,9 @@ public class DefaultUserService implements UserService {
         user.getRoles().add(roleService.findByRoleName(Role.RoleName.USER));
         return userRepository.save(user);
     }
+
+    @Override
+    public void enable(User user) {
+        userRepository.enable(user.getEmail());
+    }
 }

@@ -23,7 +23,7 @@ public class AdvancedAuthApplication {
 
             User admin = new User("admin@mail.com", "123");
             admin.getRoles().add(adminRole);
-
+            admin.setEnabled(true);
             userService.save(admin);
         };
     }

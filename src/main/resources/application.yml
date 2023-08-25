@@ -7,3 +7,9 @@ spring:
   jpa:
     hibernate:
       ddl-auto: create-drop
+  mail:
+    host: localhost
+    port: 4025
+
+app:
+  path: http://localhost:8080

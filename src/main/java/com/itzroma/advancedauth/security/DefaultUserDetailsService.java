@@ -26,6 +26,8 @@ public class DefaultUserDetailsService implements UserDetailsService {
         return new org.springframework.security.core.userdetails.User(
                 user.getEmail(),
                 user.getPassword(),
+                user.getEnabled(),
+                true, true, true,
                 authorities
         );
     }
