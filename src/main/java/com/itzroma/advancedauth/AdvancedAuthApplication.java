@@ -21,7 +21,7 @@ public class AdvancedAuthApplication {
             roleService.save(new Role(Role.RoleName.USER));
             Role adminRole = roleService.save(new Role(Role.RoleName.ADMIN));
 
-            User admin = new User("admin@mail.com", "123");
+            User admin = new User("admin", "admin", "admin@mail.com", "123");
             admin.getRoles().add(adminRole);
             admin.setEnabled(true);
             userService.save(admin);

@@ -9,6 +9,6 @@ import org.springframework.stereotype.Component;
 public class UserSignUpMapper implements RequestMapper<User, SignUpRequestDto> {
     @Override
     public User toEntity(SignUpRequestDto dto) {
-        return new User(dto.email(), dto.password());
+        return new User(dto.firstName(), dto.lastName(), dto.email(), dto.password());
     }
 }

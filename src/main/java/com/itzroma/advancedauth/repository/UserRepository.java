@@ -13,6 +13,8 @@ import java.util.Optional;
 public interface UserRepository extends JpaRepository<User, Long> {
     boolean existsByEmail(String email);
 
+    Optional<User> findByEmail(String email);
+
     @Query("FROM User u LEFT JOIN FETCH u.roles WHERE u.email = ?1")
     Optional<User> findByEmailWithRoles(String email);
 

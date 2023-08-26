@@ -14,6 +14,12 @@ public class UserMapper implements ResponseMapper<User, UserResponseDto> {
         List<String> roles = user.getRoles().stream()
                 .map(role -> role.getRoleName().name())
                 .toList();
-        return new UserResponseDto(user.getId(), user.getEmail(), roles);
+        return new UserResponseDto(
+                user.getId(),
+                user.getFirstName(),
+                user.getLastName(),
+                user.getEmail(),
+                roles
+        );
     }
 }

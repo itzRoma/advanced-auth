@@ -18,17 +18,26 @@ public class DefaultUserDetailsService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        User user = userRepository.findByEmailWithRoles(username).orElseThrow(() ->
-                new UsernameNotFoundException("User with email '%s' not found".formatted(username)));
+        User user = userRepository.findByEmailWithRoles(username).orElseThrow(
+                () -> new UsernameNotFoundException("User with email '%s' not found".formatted(username))
+        );
+
+        if (user.getAuthProvider() != AuthProvider.LOCAL) {
+            throw new IllegalStateException("This user registered with " + user.getAuthProvider() + " provider");
+        }
+
         List<SimpleGrantedAuthority> authorities = user.getRoles().stream()
                 .map(role -> new SimpleGrantedAuthority(role.getRoleName().name()))
                 .toList();
-        return new org.springframework.security.core.userdetails.User(
-                user.getEmail(),
-                user.getPassword(),
-                user.getEnabled(),
-                true, true, true,
-                authorities
-        );
+        return AuthUserDetails.builder()
+                .firstName(user.getFirstName())
+                .lastName(user.getLastName())
+                .authorities(authorities)
+                .password(user.getPassword())
+                .email(user.getEmail())
+                .enabled(user.getEnabled())
+                .imageUrl(user.getImageUrl())
+                .authProvider(user.getAuthProvider())
+                .build();
     }
 }

@@ -1,7 +1,10 @@
 package com.itzroma.advancedauth.model;
 
+import com.itzroma.advancedauth.security.AuthProvider;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -26,6 +29,12 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(nullable = false)
+    private String firstName;
+
+    @Column(nullable = false)
+    private String lastName;
+
     @Column(unique = true, nullable = false)
     private String email;
 
@@ -41,14 +50,32 @@ public class User {
     @Column(nullable = false)
     private Boolean enabled = false;
 
-    public User(String email, String password) {
+    private String imageUrl;
+
+    @Enumerated(EnumType.STRING)
+    private AuthProvider authProvider;
+
+    public User(String firstName, String lastName, String email, String password) {
+        this.firstName = firstName;
+        this.lastName = lastName;
         this.email = email;
         this.password = password;
+        this.authProvider = AuthProvider.LOCAL;
     }
 
-    public User(String email, String password, Set<Role> roles) {
+    public User(String firstName,
+                String lastName,
+                String email,
+                String password,
+                Boolean enabled,
+                String imageUrl,
+                AuthProvider authProvider) {
+        this.firstName = firstName;
+        this.lastName = lastName;
         this.email = email;
         this.password = password;
-        this.roles = roles;
+        this.enabled = enabled;
+        this.imageUrl = imageUrl;
+        this.authProvider = authProvider;
     }
 }
