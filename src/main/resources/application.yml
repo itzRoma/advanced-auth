@@ -1,15 +1,15 @@
 spring:
-  datasource:
-    driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3306/advanced_auth
-    username: root
-    password: letmein
+#  datasource:
+#    driver-class-name: com.mysql.cj.jdbc.Driver
+#    url: jdbc:mysql://localhost:3306/advanced_auth
+#    username: root
+#    password: letmein
   jpa:
     hibernate:
       ddl-auto: create-drop
-  mail:
-    host: localhost
-    port: 4025
+#  mail:
+#    host: localhost
+#    port: 4025
   security:
     oauth2:
       client:

@@ -11,3 +11,42 @@ services:
     ports:
       - "4080:1080"
       - "4025:1025"
+    networks:
+      - default
+
+  mysql:
+    container_name: mysql
+    image: mysql:latest
+    restart: unless-stopped
+    environment:
+      - MYSQL_PASSWORD=root
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=advanced_auth
+    ports:
+      - "3307:3306"
+    networks:
+      - default
+
+  api:
+    container_name: api
+    build: .
+    restart: always
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/advanced_auth
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=root
+      - SPRING_DATASOURCE_DRIVERCLASSNAME=com.mysql.cj.jdbc.Driver
+      - SPRING_MAIL_HOST=maildev
+      - SPRING_MAIL_PORT=1025
+    env_file:
+      - oauth2.env
+    ports:
+      - "8080:8080"
+    depends_on:
+      - maildev
+      - mysql
+    networks:
+      - default
+
+networks:
+  default:
