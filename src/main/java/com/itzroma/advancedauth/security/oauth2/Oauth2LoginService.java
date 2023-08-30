@@ -1,11 +1,12 @@
-package com.itzroma.advancedauth.service.impl;
+package com.itzroma.advancedauth.security.oauth2;
 
+import com.itzroma.advancedauth.model.Role;
 import com.itzroma.advancedauth.model.User;
 import com.itzroma.advancedauth.repository.UserRepository;
 import com.itzroma.advancedauth.security.AuthProvider;
 import com.itzroma.advancedauth.security.AuthUserDetails;
-import com.itzroma.advancedauth.service.Oauth2Service;
-import com.itzroma.advancedauth.util.FirstLastNames;
+import com.itzroma.advancedauth.service.RoleService;
+import com.itzroma.advancedauth.util.FullName;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserRequest;
@@ -22,17 +23,17 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
-public class DefaultOauth2Service implements Oauth2Service {
+public class Oauth2LoginService {
     private final PasswordEncoder passwordEncoder;
     private final UserRepository userRepository;
+    private final RoleService roleService;
 
-    @Override
     public OAuth2User processOauth2Auth(OAuth2UserRequest userRequest) {
         OAuth2User oAuth2User = new DefaultOAuth2UserService().loadUser(userRequest);
-        FirstLastNames firstLast = FirstLastNames.fromName(Objects.requireNonNull(oAuth2User.getAttribute("name")));
+        FullName fullName = FullName.fromName(Objects.requireNonNull(oAuth2User.getAttribute("name")));
         AuthUserDetails userDetails = AuthUserDetails.builder()
-                .firstName(firstLast.firstName())
-                .lastName(firstLast.lastName())
+                .firstName(fullName.firstName())
+                .lastName(fullName.lastName())
                 .attributes(oAuth2User.getAttributes())
                 .authorities(oAuth2User.getAuthorities())
                 .password(passwordEncoder.encode(UUID.randomUUID().toString()))
@@ -71,11 +72,11 @@ public class DefaultOauth2Service implements Oauth2Service {
                     userDetails.getImageUrl(),
                     userDetails.getAuthProvider()
             );
+            user.getRoles().add(roleService.findByRoleName(Role.RoleName.USER));
         }
         userRepository.save(user);
     }
 
-    @Override
     public OidcUser processOidcAuth(OidcUserRequest userRequest) {
         OidcUser oidcUser = new OidcUserService().loadUser(userRequest);
         AuthUserDetails userDetails = AuthUserDetails.builder()

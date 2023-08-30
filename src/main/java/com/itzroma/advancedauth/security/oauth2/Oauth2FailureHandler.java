@@ -1,4 +1,4 @@
-package com.itzroma.advancedauth.security;
+package com.itzroma.advancedauth.security.oauth2;
 
 import com.itzroma.advancedauth.util.CookieUtils;
 import jakarta.servlet.ServletException;

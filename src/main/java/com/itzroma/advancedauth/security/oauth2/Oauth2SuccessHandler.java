@@ -1,5 +1,7 @@
-package com.itzroma.advancedauth.security;
+package com.itzroma.advancedauth.security.oauth2;
 
+import com.itzroma.advancedauth.security.AuthUserDetails;
+import com.itzroma.advancedauth.security.JwtProvider;
 import com.itzroma.advancedauth.util.CookieUtils;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
@@ -20,6 +22,7 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class Oauth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
     private final HttpCookieOAuth2AuthorizationRequestRepository authorizationRequestRepository;
+    private final JwtProvider jwtProvider;
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request,
@@ -49,7 +52,7 @@ public class Oauth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
 
         String targetUrl = redirectUri.orElse(getDefaultTargetUrl());
 
-        String token = "123"; // TODO: 8/30/2023 replace with JWT token in the future
+        String token = jwtProvider.generateAccessToken((AuthUserDetails) authentication.getPrincipal());
 
         return UriComponentsBuilder.fromUriString(targetUrl)
                 .queryParam("token", token)

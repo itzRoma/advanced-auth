@@ -22,9 +22,9 @@ public class DefaultUserDetailsService implements UserDetailsService {
                 () -> new UsernameNotFoundException("User with email '%s' not found".formatted(username))
         );
 
-        if (user.getAuthProvider() != AuthProvider.LOCAL) {
-            throw new IllegalStateException("This user registered with " + user.getAuthProvider() + " provider");
-        }
+//        if (user.getAuthProvider() != AuthProvider.LOCAL) {
+//            throw new IllegalStateException("This user registered with " + user.getAuthProvider() + " provider");
+//        }
 
         List<SimpleGrantedAuthority> authorities = user.getRoles().stream()
                 .map(role -> new SimpleGrantedAuthority(role.getRoleName().name()))

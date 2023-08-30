@@ -18,7 +18,6 @@ public class TestResource {
     }
 
     @GetMapping("/authenticated")
-    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Object> info(Authentication authentication) {
         return ResponseEntity.ok(authentication.getPrincipal());
     }

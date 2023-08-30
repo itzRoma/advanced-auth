@@ -30,3 +30,8 @@ spring:
 
 app:
   path: http://localhost:8080
+  security:
+    jwt:
+      access:
+        secret: JWT_ACCESS_TOKEN_SECRET
+        expiration-ms: 150000
