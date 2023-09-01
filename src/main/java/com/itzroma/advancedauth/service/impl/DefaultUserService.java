@@ -1,6 +1,7 @@
 package com.itzroma.advancedauth.service.impl;
 
 import com.itzroma.advancedauth.exception.EntityExistsException;
+import com.itzroma.advancedauth.exception.EntityNotFoundException;
 import com.itzroma.advancedauth.model.Role;
 import com.itzroma.advancedauth.model.User;
 import com.itzroma.advancedauth.repository.UserRepository;
@@ -30,5 +31,12 @@ public class DefaultUserService implements UserService {
     @Override
     public void enable(User user) {
         userRepository.enable(user.getEmail());
+    }
+
+    @Override
+    public User findByEmail(String email) {
+        return userRepository.findByEmail(email).orElseThrow(() -> EntityNotFoundException.withField(
+                User.class, "email", email
+        ));
     }
 }

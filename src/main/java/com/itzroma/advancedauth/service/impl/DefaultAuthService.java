@@ -3,12 +3,17 @@ package com.itzroma.advancedauth.service.impl;
 import com.itzroma.advancedauth.email.event.EmailVerificationEvent;
 import com.itzroma.advancedauth.model.EmailVerificationToken;
 import com.itzroma.advancedauth.model.User;
+import com.itzroma.advancedauth.security.AuthUserDetails;
+import com.itzroma.advancedauth.security.JwtProvider;
 import com.itzroma.advancedauth.service.AuthService;
 import com.itzroma.advancedauth.service.EmailVerificationTokenService;
 import com.itzroma.advancedauth.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,6 +23,8 @@ public class DefaultAuthService implements AuthService {
     private final UserService userService;
     private final EmailVerificationTokenService emailVerificationTokenService;
     private final ApplicationEventPublisher publisher;
+    private final AuthenticationManager authenticationManager;
+    private final JwtProvider jwtProvider;
 
     @Value("${app.path}")
     private String appPath;
@@ -40,5 +47,14 @@ public class DefaultAuthService implements AuthService {
     @Override
     public boolean verifyEmailVerificationToken(String token) {
         return emailVerificationTokenService.validateEmailVerificationToken(token);
+    }
+
+    @Override
+    public String signIn(String email, String password) {
+        User user = userService.findByEmail(email);
+        Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(user.getEmail(), password)
+        );
+        return jwtProvider.generateAccessToken((AuthUserDetails) authentication.getPrincipal());
     }
 }

@@ -2,7 +2,9 @@ package com.itzroma.advancedauth.resource;
 
 import com.itzroma.advancedauth.dto.mapper.RequestMapper;
 import com.itzroma.advancedauth.dto.mapper.ResponseMapper;
+import com.itzroma.advancedauth.dto.request.SignInRequestDto;
 import com.itzroma.advancedauth.dto.request.SignUpRequestDto;
+import com.itzroma.advancedauth.dto.response.SignInResponseDto;
 import com.itzroma.advancedauth.dto.response.UserResponseDto;
 import com.itzroma.advancedauth.model.User;
 import com.itzroma.advancedauth.service.AuthService;
@@ -40,5 +42,11 @@ public class AuthResource {
                 "Cannot verify user, invalid email verification link. Try to request new one",
                 HttpStatus.BAD_REQUEST
         );
+    }
+
+    @PostMapping("/sign-in")
+    public ResponseEntity<SignInResponseDto> signIn(@RequestBody SignInRequestDto dto) {
+        String accessToken = authService.signIn(dto.email(), dto.password());
+        return ResponseEntity.ok(new SignInResponseDto(accessToken));
     }
 }
