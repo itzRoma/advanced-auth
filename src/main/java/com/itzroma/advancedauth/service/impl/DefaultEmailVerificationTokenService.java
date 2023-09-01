@@ -1,7 +1,6 @@
 package com.itzroma.advancedauth.service.impl;
 
-import com.itzroma.advancedauth.exception.EVTConfirmedException;
-import com.itzroma.advancedauth.exception.EVTExpiredException;
+import com.itzroma.advancedauth.exception.BadRequestException;
 import com.itzroma.advancedauth.exception.EntityNotFoundException;
 import com.itzroma.advancedauth.model.EmailVerificationToken;
 import com.itzroma.advancedauth.model.User;
@@ -24,7 +23,7 @@ public class DefaultEmailVerificationTokenService implements EmailVerificationTo
     @Override
     public EmailVerificationToken findByToken(String token) {
         return emailVerificationTokenRepository.findByToken(token).orElseThrow(
-                () -> new EntityNotFoundException("Invalid email verification token")
+                () -> EntityNotFoundException.withField(EmailVerificationToken.class, "token", token)
         );
     }
 
@@ -41,10 +40,10 @@ public class DefaultEmailVerificationTokenService implements EmailVerificationTo
         EmailVerificationToken emailVerificationToken = findByToken(token);
 
         if (emailVerificationToken.getConfirmedAt() != null) {
-            throw new EVTConfirmedException("Email is already confirmed");
+            throw new BadRequestException("Email is already confirmed");
         }
         if (emailVerificationToken.getExpiresAt().isBefore(LocalDateTime.now())) {
-            throw new EVTExpiredException("Email verification token is expired");
+            throw new BadRequestException("Email verification token is expired");
         }
 
         emailVerificationTokenRepository.confirm(token, LocalDateTime.now());

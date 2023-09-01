@@ -1,8 +1,10 @@
 package com.itzroma.advancedauth.service.impl;
 
 import com.itzroma.advancedauth.email.event.EmailVerificationEvent;
+import com.itzroma.advancedauth.exception.BadCredentialsException;
 import com.itzroma.advancedauth.model.EmailVerificationToken;
 import com.itzroma.advancedauth.model.User;
+import com.itzroma.advancedauth.security.AuthProvider;
 import com.itzroma.advancedauth.security.AuthUserDetails;
 import com.itzroma.advancedauth.security.JwtProvider;
 import com.itzroma.advancedauth.service.AuthService;
@@ -52,6 +54,11 @@ public class DefaultAuthService implements AuthService {
     @Override
     public String signIn(String email, String password) {
         User user = userService.findByEmail(email);
+
+        if (user.getAuthProvider() != AuthProvider.LOCAL) {
+            throw new BadCredentialsException("This user registered with " + user.getAuthProvider() + " provider");
+        }
+
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(user.getEmail(), password)
         );

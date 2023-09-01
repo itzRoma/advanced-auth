@@ -16,13 +16,15 @@ public class DefaultRoleService implements RoleService {
     @Override
     public Role save(Role role) {
         if (roleRepository.existsByRoleName(role.getRoleName())) {
-            throw new EntityExistsException("Role '%s' is already created".formatted(role.getRoleName()));
+            throw EntityExistsException.withField(Role.class, "role name", role.getRoleName().name());
         }
         return roleRepository.save(role);
     }
 
     @Override
     public Role findByRoleName(Role.RoleName roleName) {
-        return roleRepository.findByRoleName(roleName).orElseThrow(() -> new EntityNotFoundException("Role '%s' not found".formatted(roleName)));
+        return roleRepository.findByRoleName(roleName).orElseThrow(
+                () -> EntityNotFoundException.withField(Role.class, "role name", roleName.name())
+        );
     }
 }

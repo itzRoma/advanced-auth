@@ -1,5 +1,6 @@
 package com.itzroma.advancedauth.security.oauth2;
 
+import com.itzroma.advancedauth.exception.Oauth2AuthenticationProcessingException;
 import com.itzroma.advancedauth.model.Role;
 import com.itzroma.advancedauth.model.User;
 import com.itzroma.advancedauth.repository.UserRepository;
@@ -16,6 +17,7 @@ import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import java.util.Objects;
 import java.util.Optional;
@@ -30,6 +32,14 @@ public class Oauth2LoginService {
 
     public OAuth2User processOauth2Auth(OAuth2UserRequest userRequest) {
         OAuth2User oAuth2User = new DefaultOAuth2UserService().loadUser(userRequest);
+        AuthProvider authProvider = extractAuthProvider(userRequest);
+
+        if (!StringUtils.hasText(oAuth2User.getAttribute("email"))) {
+            throw new Oauth2AuthenticationProcessingException(
+                    "Can't obtain an email from " + authProvider + ". Try to go to their privacy settings."
+            );
+        }
+
         FullName fullName = FullName.fromName(Objects.requireNonNull(oAuth2User.getAttribute("name")));
         AuthUserDetails userDetails = AuthUserDetails.builder()
                 .firstName(fullName.firstName())
@@ -40,7 +50,7 @@ public class Oauth2LoginService {
                 .email(oAuth2User.getAttribute("email"))
                 .enabled(true)
                 .imageUrl(oAuth2User.getAttribute("avatar_url"))
-                .authProvider(extractAuthProvider(userRequest))
+                .authProvider(authProvider)
                 .build();
         saveOrUpdate(userDetails);
         return userDetails;
@@ -56,7 +66,7 @@ public class Oauth2LoginService {
         if (userOptional.isPresent()) { // update existing
             user = userOptional.get();
             if (user.getAuthProvider() != userDetails.getAuthProvider()) {
-                throw new IllegalStateException("This user registered with " + user.getAuthProvider() + " provider");
+                throw new Oauth2AuthenticationProcessingException("This user registered with " + user.getAuthProvider() + " provider");
             }
 
             user.setFirstName(userDetails.getFirstName());
@@ -79,6 +89,14 @@ public class Oauth2LoginService {
 
     public OidcUser processOidcAuth(OidcUserRequest userRequest) {
         OidcUser oidcUser = new OidcUserService().loadUser(userRequest);
+        AuthProvider authProvider = extractAuthProvider(userRequest);
+
+        if (!StringUtils.hasText(oidcUser.getEmail())) {
+            throw new Oauth2AuthenticationProcessingException(
+                    "Can't obtain an email from " + authProvider + ". Try to go to their privacy settings."
+            );
+        }
+
         AuthUserDetails userDetails = AuthUserDetails.builder()
                 .firstName(oidcUser.getGivenName())
                 .lastName(oidcUser.getFamilyName())
@@ -91,7 +109,7 @@ public class Oauth2LoginService {
                 .userInfo(oidcUser.getUserInfo())
                 .idToken(oidcUser.getIdToken())
                 .imageUrl(oidcUser.getPicture())
-                .authProvider(extractAuthProvider(userRequest))
+                .authProvider(authProvider)
                 .build();
         saveOrUpdate(userDetails);
         return userDetails;
