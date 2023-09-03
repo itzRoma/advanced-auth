@@ -1,5 +1,7 @@
 package com.itzroma.advancedauth.security.oauth2;
 
+import com.itzroma.advancedauth.config.AppConfig;
+import com.itzroma.advancedauth.exception.BadRequestException;
 import com.itzroma.advancedauth.security.AuthUserDetails;
 import com.itzroma.advancedauth.security.JwtProvider;
 import com.itzroma.advancedauth.util.CookieUtils;
@@ -15,6 +17,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.io.IOException;
+import java.net.URI;
 import java.util.Optional;
 
 @Log4j2
@@ -23,6 +26,7 @@ import java.util.Optional;
 public class Oauth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
     private final HttpCookieOAuth2AuthorizationRequestRepository authorizationRequestRepository;
     private final JwtProvider jwtProvider;
+    private final AppConfig appConfig;
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request,
@@ -43,15 +47,15 @@ public class Oauth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
     protected String determineTargetUrl(HttpServletRequest request,
                                         HttpServletResponse response,
                                         Authentication authentication) {
-        Optional<String> redirectUri = CookieUtils.getCookie(request, HttpCookieOAuth2AuthorizationRequestRepository.REDIRECT_URI_PARAM_COOKIE_NAME)
+        Optional<String> redirectUri = CookieUtils
+                .getCookie(request, HttpCookieOAuth2AuthorizationRequestRepository.REDIRECT_URI_PARAM_COOKIE_NAME)
                 .map(Cookie::getValue);
 
         if (redirectUri.isPresent() && !isAuthorizedRedirectUri(redirectUri.get())) {
-            throw new RuntimeException("Sorry! We've got an Unauthorized Redirect URI and can't proceed with the authentication");
+            throw new BadRequestException("Sorry! We've got an Unauthorized Redirect URI and can't proceed with the authentication");
         }
 
         String targetUrl = redirectUri.orElse(getDefaultTargetUrl());
-
         String token = jwtProvider.generateAccessToken((AuthUserDetails) authentication.getPrincipal());
 
         return UriComponentsBuilder.fromUriString(targetUrl)
@@ -65,19 +69,14 @@ public class Oauth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
     }
 
     private boolean isAuthorizedRedirectUri(String uri) {
-//        URI clientRedirectUri = URI.create(uri);
-//
-//        return appConfig.getAuthorizedRedirectUris()
-//                .stream()
-//                .anyMatch(authorizedRedirectUri -> {
-//                    // Only validate host and port. Let the clients use different paths if they want to
-//                    URI authorizedURI = URI.create(authorizedRedirectUri);
-//                    if(authorizedURI.getHost().equalsIgnoreCase(clientRedirectUri.getHost())
-//                            && authorizedURI.getPort() == clientRedirectUri.getPort()) {
-//                        return true;
-//                    }
-//                    return false;
-//                });
-        return true;
+        URI clientRedirectUri = URI.create(uri);
+        return appConfig.getAuthorizedRedirectUris().stream()
+                .map(URI::create)
+                .anyMatch(authorizedRedirectUri -> validateUri(clientRedirectUri, authorizedRedirectUri));
+    }
+
+    private boolean validateUri(URI clientRedirectUri, URI authorizedRedirectUri) {
+        return authorizedRedirectUri.getHost().equalsIgnoreCase(clientRedirectUri.getHost())
+                && authorizedRedirectUri.getPort() == clientRedirectUri.getPort();
     }
 }

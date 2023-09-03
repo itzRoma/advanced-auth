@@ -6,58 +6,68 @@ import com.itzroma.advancedauth.model.User;
 import com.itzroma.advancedauth.repository.UserRepository;
 import com.itzroma.advancedauth.security.AuthProvider;
 import com.itzroma.advancedauth.security.AuthUserDetails;
+import com.itzroma.advancedauth.security.oauth2.userinfo.Oauth2UserInfo;
+import com.itzroma.advancedauth.security.oauth2.userinfo.Oauth2UserInfoFactory;
 import com.itzroma.advancedauth.service.RoleService;
-import com.itzroma.advancedauth.util.FullName;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.log4j.Log4j2;
+import org.springframework.security.authentication.InternalAuthenticationServiceException;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserRequest;
-import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserService;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
-import org.springframework.security.oauth2.core.oidc.user.OidcUser;
+import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
-import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
+@Log4j2
 @Service
 @RequiredArgsConstructor
-public class Oauth2LoginService {
+public class Oauth2LoginService extends DefaultOAuth2UserService {
     private final PasswordEncoder passwordEncoder;
     private final UserRepository userRepository;
     private final RoleService roleService;
 
-    public OAuth2User processOauth2Auth(OAuth2UserRequest userRequest) {
-        OAuth2User oAuth2User = new DefaultOAuth2UserService().loadUser(userRequest);
-        AuthProvider authProvider = extractAuthProvider(userRequest);
+    @Override
+    public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
+        OAuth2User oAuth2User = super.loadUser(userRequest);
+        try {
+            return processOAuth2User(userRequest, oAuth2User);
+        } catch (AuthenticationException ex) {
+            throw ex;
+        } catch (Exception ex) {
+            log.debug("Can't process oauth2 user " + oAuth2User.getName());
+            throw new InternalAuthenticationServiceException(ex.getMessage(), ex.getCause());
+        }
+    }
 
-        if (!StringUtils.hasText(oAuth2User.getAttribute("email"))) {
+    private OAuth2User processOAuth2User(OAuth2UserRequest userRequest, OAuth2User oAuth2User) {
+        AuthProvider authProvider = AuthProvider.valueOf(userRequest.getClientRegistration().getRegistrationId().toUpperCase());
+        Oauth2UserInfo oauth2UserInfo = Oauth2UserInfoFactory.getOauth2UserInfo(authProvider, oAuth2User.getAttributes());
+
+        if (!StringUtils.hasText(oauth2UserInfo.getEmail())) {
             throw new Oauth2AuthenticationProcessingException(
                     "Can't obtain an email from " + authProvider + ". Try to go to their privacy settings."
             );
         }
 
-        FullName fullName = FullName.fromName(Objects.requireNonNull(oAuth2User.getAttribute("name")));
         AuthUserDetails userDetails = AuthUserDetails.builder()
-                .firstName(fullName.firstName())
-                .lastName(fullName.lastName())
+                .firstName(oauth2UserInfo.getFirstName())
+                .lastName(oauth2UserInfo.getLastName())
                 .attributes(oAuth2User.getAttributes())
                 .authorities(oAuth2User.getAuthorities())
-                .password(passwordEncoder.encode(UUID.randomUUID().toString()))
-                .email(oAuth2User.getAttribute("email"))
+                .password(passwordEncoder.encode(UUID.randomUUID().toString())) // mock password
+                .email(oauth2UserInfo.getEmail())
                 .enabled(true)
-                .imageUrl(oAuth2User.getAttribute("avatar_url"))
+                .imageUrl(oauth2UserInfo.imageUrl())
                 .authProvider(authProvider)
                 .build();
         saveOrUpdate(userDetails);
         return userDetails;
-    }
-
-    private static AuthProvider extractAuthProvider(OAuth2UserRequest userRequest) {
-        return AuthProvider.valueOf(userRequest.getClientRegistration().getRegistrationId().toUpperCase());
     }
 
     private void saveOrUpdate(AuthUserDetails userDetails) {
@@ -78,40 +88,12 @@ public class Oauth2LoginService {
                     userDetails.getLastName(),
                     userDetails.getEmail(),
                     userDetails.getPassword(),
-                    userDetails.getEnabled(),
+                    userDetails.isEnabled(),
                     userDetails.getImageUrl(),
                     userDetails.getAuthProvider()
             );
             user.getRoles().add(roleService.findByRoleName(Role.RoleName.USER));
         }
         userRepository.save(user);
-    }
-
-    public OidcUser processOidcAuth(OidcUserRequest userRequest) {
-        OidcUser oidcUser = new OidcUserService().loadUser(userRequest);
-        AuthProvider authProvider = extractAuthProvider(userRequest);
-
-        if (!StringUtils.hasText(oidcUser.getEmail())) {
-            throw new Oauth2AuthenticationProcessingException(
-                    "Can't obtain an email from " + authProvider + ". Try to go to their privacy settings."
-            );
-        }
-
-        AuthUserDetails userDetails = AuthUserDetails.builder()
-                .firstName(oidcUser.getGivenName())
-                .lastName(oidcUser.getFamilyName())
-                .attributes(oidcUser.getAttributes())
-                .authorities(oidcUser.getAuthorities())
-                .password(passwordEncoder.encode(UUID.randomUUID().toString()))
-                .email(oidcUser.getEmail())
-                .enabled(true)
-                .claims(oidcUser.getClaims())
-                .userInfo(oidcUser.getUserInfo())
-                .idToken(oidcUser.getIdToken())
-                .imageUrl(oidcUser.getPicture())
-                .authProvider(authProvider)
-                .build();
-        saveOrUpdate(userDetails);
-        return userDetails;
     }
 }

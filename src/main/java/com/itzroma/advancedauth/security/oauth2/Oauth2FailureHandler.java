@@ -22,7 +22,8 @@ public class Oauth2FailureHandler extends SimpleUrlAuthenticationFailureHandler 
     public void onAuthenticationFailure(HttpServletRequest request,
                                         HttpServletResponse response,
                                         AuthenticationException exception) throws IOException, ServletException {
-        String targetUrl = CookieUtils.getCookie(request, HttpCookieOAuth2AuthorizationRequestRepository.REDIRECT_URI_PARAM_COOKIE_NAME)
+        String targetUrl = CookieUtils
+                .getCookie(request, HttpCookieOAuth2AuthorizationRequestRepository.REDIRECT_URI_PARAM_COOKIE_NAME)
                 .map(Cookie::getValue)
                 .orElse(("/"));
 
@@ -31,7 +32,6 @@ public class Oauth2FailureHandler extends SimpleUrlAuthenticationFailureHandler 
                 .build().toUriString();
 
         authorizationRequestRepository.removeAuthorizationRequestCookies(request, response);
-
         getRedirectStrategy().sendRedirect(request, response, targetUrl);
     }
 }

@@ -34,11 +34,6 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return createResponse(HttpStatus.NOT_FOUND, exception.getLocalizedMessage());
     }
 
-    @ExceptionHandler(Oauth2AuthenticationProcessingException.class)
-    public ResponseEntity<ExceptionResponseDto> oauth2AuthenticationProcessing(Oauth2AuthenticationProcessingException exception) {
-        return createResponse(HttpStatus.INTERNAL_SERVER_ERROR, exception.getLocalizedMessage());
-    }
-
     private ResponseEntity<ExceptionResponseDto> createResponse(HttpStatus httpStatus, String message) {
         return new ResponseEntity<>(new ExceptionResponseDto(httpStatus, message), httpStatus);
     }

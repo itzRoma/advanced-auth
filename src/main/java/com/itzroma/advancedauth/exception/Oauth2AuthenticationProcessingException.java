@@ -1,10 +1,8 @@
 package com.itzroma.advancedauth.exception;
 
-import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.security.core.AuthenticationException;
 
-@ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
-public class Oauth2AuthenticationProcessingException extends RuntimeException {
+public class Oauth2AuthenticationProcessingException extends AuthenticationException {
     public Oauth2AuthenticationProcessingException(String message) {
         super(message);
     }

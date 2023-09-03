@@ -41,13 +41,15 @@ public class WebSecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http,
-                                                   Oauth2LoginService oauth2LoginService,
-                                                   AuthenticationEntryPoint authenticationEntryPoint,
-                                                   Oauth2SuccessHandler successHandler,
-                                                   Oauth2FailureHandler failureHandler,
-                                                   HttpCookieOAuth2AuthorizationRequestRepository authorizationRequestRepository,
-                                                   JwtAuthenticationFilter jwtAuthenticationFilter) throws Exception {
+    public SecurityFilterChain securityFilterChain(
+            HttpSecurity http,
+            AuthenticationEntryPoint authenticationEntryPoint,
+            HttpCookieOAuth2AuthorizationRequestRepository authorizationRequestRepository,
+            Oauth2LoginService oauth2LoginService,
+            Oauth2SuccessHandler successHandler,
+            Oauth2FailureHandler failureHandler,
+            JwtAuthenticationFilter jwtAuthenticationFilter
+    ) throws Exception {
         return http
                 .cors(Customizer.withDefaults())
                 .csrf(AbstractHttpConfigurer::disable)
@@ -64,8 +66,10 @@ public class WebSecurityConfig {
                                 .authorizationRequestRepository(authorizationRequestRepository)
                         )
                         .userInfoEndpoint(uieConfig -> uieConfig
-                                .userService(oauth2LoginService::processOauth2Auth)
-                                .oidcUserService(oauth2LoginService::processOidcAuth)
+                                .userService(oauth2LoginService)
+                        )
+                        .redirectionEndpoint(reConfig -> reConfig
+                                .baseUri("/oauth2/callback/*")
                         )
                         .successHandler(successHandler)
                         .failureHandler(failureHandler)

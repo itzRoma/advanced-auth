@@ -26,7 +26,6 @@ spring:
             client-secret: ${GOOGLE_CLIENT_SECRET}
             redirect-uri: "{baseUrl}/oauth2/callback/{registrationId}"
             scope:
-              - openid
               - email
               - profile
 
@@ -37,3 +36,5 @@ app:
       access:
         secret: JWT_ACCESS_TOKEN_SECRET
         expiration-ms: 150000
+  authorized-redirect-uris:
+    - http://localhost:8080
